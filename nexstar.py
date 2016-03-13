@@ -130,7 +130,7 @@ class NexStar:
     def set_time(self, time):
         command = 'H'
         for p in time:
-            command = command + str(p)
+            command = command + chr(p)
         self.serial.write(command)
         response = self.serial.read(1)
         self._validate_command(response)
