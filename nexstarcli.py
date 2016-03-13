@@ -14,19 +14,18 @@ def main():
     group.add_argument("--get_time", action="store_true")
     group.add_argument("--get_tracking_mode", action="store_true")
     group.add_argument("--get_version", action="store_true")
-    group.add_argument("--set_location", nargs=2, metavar=("latitude","longitude"))
-    group.add_argument("--goto_azel", nargs=2, metavar=("az","el"))
+    group.add_argument("--set_location", nargs=2, metavar=("latitude", "longitude"))
+    group.add_argument("--goto_azel", nargs=2, metavar=("az", "el"))
     group.add_argument("--goto_in_progress", action="store_true")
-    group.add_argument("--goto_radec", nargs=2, metavar=("Ra","Dec"))
-    group.add_argument("--set_tracking_mode",metavar="tracking_mode")
+    group.add_argument("--goto_radec", nargs=2, metavar=("Ra", "Dec"))
+    group.add_argument("--set_tracking_mode", metavar="tracking_mode")
     group.add_argument("--set_time")
     group.add_argument("--cancel_goto", action="store_true")
     group.add_argument("--alignment_complete", action="store_true")
     group.add_argument("--echo")
-    group.add_argument("--slew_fixed", nargs=2,metavar=("az_rate","el_rate"))
-    group.add_argument("--slew_var", nargs=2, metavar=("az_rate","el_rate"))
-    group.add_argument("--sync", nargs=2, metavar=("ra","dec"))
-
+    group.add_argument("--slew_fixed", nargs=2, metavar=("az_rate", "el_rate"))
+    group.add_argument("--slew_var", nargs=2, metavar=("az_rate", "el_rate"))
+    group.add_argument("--sync", nargs=2, metavar=("ra", "dec"))
 
     args = parser.parse_args()
 
@@ -57,7 +56,7 @@ def main():
             map(int, latitude.split(","))
         )
     elif args.set_time:
-        telescope.set_time(map(int,args.set_time.split(",")))
+        telescope.set_time(map(int, args.set_time.split(",")))
     elif args.set_tracking_mode:
         telescope.set_tracking_mode(int(args.set_tracking_mode))
     elif args.goto_azel:
@@ -66,18 +65,18 @@ def main():
         telescope.goto_azel(_az, _el)
     elif args.goto_in_progress:
         if telescope.goto_in_progress():
-            print "Yes"
+            print("Yes")
         else:
-            print "No"
+            print("No")
     elif args.goto_radec:
         _ra = float(args.goto_radec[0])
         _dec = float(args.goto_radec[1])
         telescope.goto_radec(_ra, _dec)
     elif args.alignment_complete:
         if telescope.alignment_complete():
-            print "Yes"
+            print("Yes")
         else:
-            print "No"
+            print("No")
     elif args.cancel_goto:
         telescope.cancel_goto()
     elif args.echo:
@@ -96,10 +95,6 @@ def main():
         telescope.sync(_ra, _dec)
     else:
         print(parser.print_help())
-
-
-
-
 
 
 if __name__ == '__main__':
