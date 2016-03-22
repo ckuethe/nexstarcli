@@ -3,6 +3,17 @@
 import serial
 
 
+
+class TelescopeError(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+
+class TelescopeAlignmentNotSet(TelescopeError):
+    def __ini__(self):
+        msg = "Telescope alignment not set"
+        super(TelescopeAlignmentNotSet, self).__init__(msg)
+
+
 class NexStar:
     
     def __init__(self, device):
@@ -20,13 +31,21 @@ class NexStar:
 
     @staticmethod
     def _degrees_to_precise(degrees):
-        return '%08X' % round(degrees / 360. * 2.**32)
+        print "_degrees_to_precise(%s)"%degrees
+        rounded = round(degrees / 360. * 2.**32)
+        print "_rounded_off %s"%rounded
+        return '%08X' % rounded
 
     def _get_position(self, command):
         self.serial.write(command)
         response = self.serial.read(18)
+        print response
         return (self._precise_to_degrees(response[:8]),
                 self._precise_to_degrees(response[9:17]))
+
+    @staticmethod
+    def _convert_radec_to_atlaz(_ra, _dec):
+        pass
 
     def get_azel(self):
         return self._get_position('z')
@@ -37,14 +56,41 @@ class NexStar:
     def _goto_command(self, char, values):
         command = (char + self._degrees_to_precise(values[0]) + ',' +
                    self._degrees_to_precise(values[1]))
+        print command
         self.serial.write(command)
         response = self.serial.read(1)
         self._validate_command(response)
-        
+
+    def safe_goto_azel(self, az, el):
+        if not self.alignment_complete():
+            raise TelescopeAlignmentNotSet
+        if el > 90.0:
+            raise TelescopeError("elevation larger than 90 degrees not allowed")
+        if az >= 360.0:
+            az = 0.0
+        self.goto_azel(az, el)
+
     def goto_azel(self, az, el):
+        print "going to %s %s" %(az, el)
         self._goto_command('b', (az, el))
-    
+    def DetermineRaDecAreSafe(self, az, el):
+        '''Checks if ra and dec are safe for telescope
+
+        Based on the location this function should determine if the
+        given Right Assention and Declination are safe for the telescope
+        to point to. (we don't want pointing at floor :) '''
+        return True
+
+    def safe_goto_radec(self, ra, dec):
+        if not self.alignment_complete():
+            raise TelescopeAlignmentNotSet
+        if not self.DetermineRaDecAreSafe(ra,dec):
+            raise TelescopeError("Ra: %s, Dec: %s are not safe at current location" %
+                                 (ra, dec))
+        self.goto_radec(ra, dec)
+
     def goto_radec(self, ra, dec):
+        print "goto: %s %s "%(ra,dec)
         self._goto_command('r', (ra, dec))
         
     def sync(self, ra, dec):
