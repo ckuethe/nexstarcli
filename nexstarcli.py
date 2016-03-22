@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# test
 import nexstar
 import argparse
 from astropy import units as u
@@ -8,37 +7,45 @@ from astropy.coordinates import EarthLocation
 from astropy.coordinates import SkyCoord
 from astropy.coordinates import AltAz
 
+
 def _convert_azel_to_radec(_az, _el, _location, _time):
-    _azel = SkyCoord(alt=_el*u.deg, az=_az*u.deg, frame='altaz', obstime=_time, location=_location)
+    _azel = SkyCoord(alt=_el * u.deg, az=_az * u.deg, frame='altaz',
+                     obstime=_time, location=_location)
     _radec = _azel.icrs
     return _radec.ra.degree, _radec.dec.degree
 
 
 def _convert_radec_to_azel(_ra, _dec, _location, _time):
-  # collect latitude and logitude from the telescope
-        _radec = SkyCoord(ra=_ra*u.degree, dec=_dec*u.degree, frame='icrs')
-        _azel = _radec.transform_to(AltAz(obstime=_time, location = _location))
-        return _azel.az.degree, _azel.alt.degree
+    # collect latitude and logitude from the telescope
+    _radec = SkyCoord(ra=_ra * u.degree, dec=_dec * u.degree, frame='icrs')
+    _azel = _radec.transform_to(AltAz(obstime=_time, location=_location))
+    return _azel.az.degree, _azel.alt.degree
+
 
 def _get_telescope_location(telescope):
     _latitude, _longitude = telescope.get_location()
 
-    _latitude_deg = _latitude[0] + (_latitude[1]/60.0) + (_latitude[2]/(60.0 * 60.0))
-    if _latitude[3] >0:
+    _latitude_deg = _latitude[0] + (_latitude[1] / 60.0) + (
+        _latitude[2] / (60.0 * 60.0))
+    if _latitude[3] > 0:
         _latitude_deg *= -1.0
 
-    _longitude_deg = _longitude[0] + (_longitude[1]/60.0) + (_longitude[2]/(60.0 * 60.0))
+    _longitude_deg = _longitude[0] + (_longitude[1] / 60.0) + (
+        _longitude[2] / (60.0 * 60.0))
     if _longitude[3] > 0:
         _longitude_deg *= -1.0
 
-    telescope_location = EarthLocation(lat=_latitude_deg*u.deg, lon=_longitude_deg*u.deg)
+    telescope_location = EarthLocation(lat=_latitude_deg * u.deg,
+                                       lon=_longitude_deg * u.deg)
     return telescope_location
 
 
 def main():
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group()
-    group.add_argument("-d", help="Port telescope is connected to. Default = /dev/ttyUSB0")
+    group.add_argument("-d",
+                       help="Port telescope is connected to."
+                            "Default = /dev/ttyUSB0")
     group.add_argument("--get_azel", action="store_true")
     group.add_argument("--get_location", action="store_true")
     group.add_argument("--get_model", action="store_true")
@@ -46,7 +53,8 @@ def main():
     group.add_argument("--get_time", action="store_true")
     group.add_argument("--get_tracking_mode", action="store_true")
     group.add_argument("--get_version", action="store_true")
-    group.add_argument("--set_location", nargs=2, metavar=("latitude", "longitude"))
+    group.add_argument("--set_location", nargs=2,
+                       metavar=("latitude", "longitude"))
     group.add_argument("--goto_azel", nargs=2, metavar=("az", "el"))
     group.add_argument("--goto_in_progress", action="store_true")
     group.add_argument("--goto_radec", nargs=2, metavar=("Ra", "Dec"))
@@ -59,7 +67,7 @@ def main():
     group.add_argument("--slew_fixed", nargs=2, metavar=("az_rate", "el_rate"))
     group.add_argument("--slew_var", nargs=2, metavar=("az_rate", "el_rate"))
     group.add_argument("--sync", nargs=2, metavar=("ra", "dec"))
-    group.add_argument("--move_ra",)
+    group.add_argument("--move_ra", )
 
     args = parser.parse_args()
 
@@ -76,7 +84,7 @@ def main():
         print(telescope.get_location())
     elif args.get_radec:
         _az, _el = telescope.get_azel()
-        #print(telescope.get_radec())
+        # print(telescope.get_radec())
         obstime = Time.now()
         telescope_location = _get_telescope_location(telescope)
         print (_convert_azel_to_radec(_az, _el, telescope_location, obstime))
@@ -138,34 +146,27 @@ def main():
         print _radec_coordinates[0]
         # then we add the integer to ra
         # move to new ra same dec
-     # check that number if safe
-        #telescope.is_this_ra_safe(_ra)
+        # check that number if safe
+        # telescope.is_this_ra_safe(_ra)
 
     elif args.radec_to_azel:
-        # Create an observer location from the telescopes latitude, longitude, and time
-        # Then create a icrs coordinate from the obsever location and the ra dec
-        # convert to altaz
-
         # collect latitude and logitude from the telescope
         telescope_location = _get_telescope_location(telescope)
         # create icrs frame
         _ra = float(args.radec_to_azel[0])
         _dec = float(args.radec_to_azel[1])
-        c = SkyCoord(ra=_ra*u.degree, dec=_dec*u.degree, frame='icrs')
+        c = SkyCoord(ra=_ra * u.degree, dec=_dec * u.degree, frame='icrs')
 
         # Create observer time
         obstime = Time.now()
 
-
-
-        #Create the az el coordinates
-        c_altaz = c.transform_to(AltAz(obstime=obstime, location = telescope_location))
+        # Create the az el coordinates
+        c_altaz = c.transform_to(
+            AltAz(obstime=obstime, location=telescope_location))
         _el = c_altaz.alt.degree
         _az = c_altaz.az.degree
         print _az, _el
         telescope.goto_azel(_az, _el)
-
-
 
     else:
         print(parser.print_help())

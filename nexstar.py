@@ -3,10 +3,10 @@
 import serial
 
 
-
 class TelescopeError(Exception):
     def __init__(self, msg):
         self.msg = msg
+
 
 class TelescopeAlignmentNotSet(TelescopeError):
     def __ini__(self):
@@ -15,7 +15,6 @@ class TelescopeAlignmentNotSet(TelescopeError):
 
 
 class NexStar:
-    
     def __init__(self, device):
         self.serial = serial.Serial(device, baudrate=9600, timeout=1)
         self.DIR_AZIMUTH = 0
@@ -27,13 +26,13 @@ class NexStar:
 
     @staticmethod
     def _precise_to_degrees(string):
-        return int(string, 16) / 2.**32 * 360.
+        return int(string, 16) / 2. ** 32 * 360.
 
     @staticmethod
     def _degrees_to_precise(degrees):
-        print "_degrees_to_precise(%s)"%degrees
-        rounded = round(degrees / 360. * 2.**32)
-        print "_rounded_off %s"%rounded
+        print "_degrees_to_precise(%s)" % degrees
+        rounded = round(degrees / 360. * 2. ** 32)
+        print "_rounded_off %s" % rounded
         return '%08X' % rounded
 
     def _get_position(self, command):
@@ -49,9 +48,9 @@ class NexStar:
 
     def get_azel(self):
         return self._get_position('z')
-        
+
     def get_radec(self):
-        return self._get_position('e') 
+        return self._get_position('e')
 
     def _goto_command(self, char, values):
         command = (char + self._degrees_to_precise(values[0]) + ',' +
@@ -65,34 +64,42 @@ class NexStar:
         if not self.alignment_complete():
             raise TelescopeAlignmentNotSet
         if el > 90.0:
-            raise TelescopeError("elevation larger than 90 degrees not allowed")
+            raise TelescopeError(
+                "elevation larger than 90 degrees not allowed")
         if az >= 360.0:
             az = 0.0
         self.goto_azel(az, el)
 
     def goto_azel(self, az, el):
-        print "going to %s %s" %(az, el)
+        print "going to %s %s" % (az, el)
         self._goto_command('b', (az, el))
-    def DetermineRaDecAreSafe(self, az, el):
-        '''Checks if ra and dec are safe for telescope
+
+    @staticmethod
+    def determine_azel_are_safe(_az, _el):
+        """Checks if ra and dec are safe for telescope
 
         Based on the location this function should determine if the
         given Right Assention and Declination are safe for the telescope
-        to point to. (we don't want pointing at floor :) '''
-        return True
+        to point to. (we don't want pointing at floor :)
+        :param _el:
+        :param _az:
+        """
+        if _az and _el:
+            return True
 
     def safe_goto_radec(self, ra, dec):
         if not self.alignment_complete():
             raise TelescopeAlignmentNotSet
-        if not self.DetermineRaDecAreSafe(ra,dec):
-            raise TelescopeError("Ra: %s, Dec: %s are not safe at current location" %
-                                 (ra, dec))
+        if not self.DetermineRaDecAreSafe(ra, dec):
+            raise TelescopeError(
+                "Ra: %s, Dec: %s are not safe at current location" %
+                (ra, dec))
         self.goto_radec(ra, dec)
 
     def goto_radec(self, ra, dec):
-        print "goto: %s %s "%(ra,dec)
+        print "goto: %s %s " % (ra, dec)
         self._goto_command('r', (ra, dec))
-        
+
     def sync(self, ra, dec):
         self._goto_command('s', (ra, dec))
 
