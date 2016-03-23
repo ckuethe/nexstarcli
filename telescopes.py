@@ -7,6 +7,10 @@ from abc import ABCMeta
 from abc import abstractmethod
 
 
+class TelescopeError(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+
 class TelescopeCommand(object):
     _cmd = ""
 
@@ -15,11 +19,25 @@ class BaseTelescope(object):
     """Base class for telescope"""
     __metaclass__ = ABCMeta
 
+    def __init__(self, device="/dev/ttyUSB0"):
+        """
+        :param device: device which is attached to telescope. Default is "/dev/ttyUSB0"
+        :return:
+        """
+        self.device = device
+
     @abstractmethod
     def _send_command(self, cmd):
         """Send arbritrary command to telescope
 
        :param cmd: Object of type TelescopeCommand
+        """
+        pass
+
+    @abstractmethod
+    def _read_response(self):
+        """Read response from telescope to pevious sent command.
+        :return: response object from telescope
         """
         pass
 
@@ -98,7 +116,7 @@ class BaseTelescope(object):
         :return: object containing any error or other pertinent information
         """
 
-    @abastract
+    @abstractmethod
     def display(self, msg):
         """Display message on telescope's control display
 
