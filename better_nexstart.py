@@ -18,6 +18,8 @@ class TelescopeAlignmentNotSet(telescopes.TelescopeError):
 
 
 class NexStarSLT130(telescopes.BaseTelescope):
+
+
     def __init__(self, device):
         super(NexStarSLT130, self).__init__(device)
         self.serial = serial.Serial(device, baudrate=9600, timeout=2)
@@ -62,7 +64,7 @@ class NexStarSLT130(telescopes.BaseTelescope):
     def get_azel(self):
         """Returns az and el in degrees"""
         _altaz = self.get_altaz()
-        return _altaz
+        return _altaz.az.degrees, _altaz.alt.degrees
 
     def get_radec(self):
         """Returns RaDec coordinates """
@@ -170,22 +172,38 @@ class NexStarSLT130(telescopes.BaseTelescope):
         self._fixed_slew_command(self.DIR_AZIMUTH, az_rate)
         self._fixed_slew_command(self.DIR_ELEVATION, el_rate)
 
+
+
     def get_location(self):
+        """Get location in latitude and longitude
+
+        Positive latitude is above the equator (N), and negative latitude is
+        below the equator (S). Positive longitude is east of the prime
+        meridian, while negative longitude is west of the prime meridian
+        (a north-south line that runs through a point in England)
+
+        If the response contains N = 0 (positive), and E = 0 (positive).
+
+        :return:
+        """
         self.serial.write('w')
         response = self.serial.read(9)
+
         lat = ()
         for char in response[:4]:
             lat = lat + (ord(char),)
+        _lat_degrees= lat[0] + (lat[1] / 60.0) + (lat[2]/(60.0 * 60.0))
+        if lat[3] != 0:
+            _lat_degrees *= -1.0
+
         _long = ()
         for char in response[4:-1]:
             _long = _long + (ord(char),)
-        ns_char = 'N' if lat[3] == 0 else 'S'
-        ew_char = 'E' if _long[3] == 0 else 'W'
-        print(str(lat[0]) + ' ' + str(lat[1]) + "'" + str(lat[2]) +
-              '" ' + ns_char + ', ' +
-              str(_long[0]) + ' ' + str(_long[1]) + "'" + str(_long[2]) +
-              '" ' + ew_char)
-        return lat, _long
+        _long_degrees= _long[0] + (_long[1] / 60.0) + (_long[2]/(60.0 * 60.0))
+        if _long[3] != 0:
+            _long_degrees *= -1.0
+
+        return _lat_degrees, _long_degrees
 
     def set_location(self, lat, lon):
         command = 'W'
@@ -236,13 +254,13 @@ class NexStarSLT130(telescopes.BaseTelescope):
 
     def echo(self, x):
         command = 'K' + chr(x)
-        self.serial.write(command)
-        response = self.serial.read(2)
+        self._send_command(command)
+        response = self._read_response(2)
         return ord(response[0])
 
     def alignment_complete(self):
-        self.serial.write('J')
-        response = self.serial.read(2)
+        self._send_command('J')
+        response = self._read_response(2)
         return True if ord(response[0]) == 1 else False
 
     def goto_in_progress(self):
@@ -251,6 +269,35 @@ class NexStarSLT130(telescopes.BaseTelescope):
         return True if int(response[0]) == 1 else False
 
     def cancel_goto(self):
-        self.serial.write('M')
-        response = self.serial.read(1)
+        self._send_command('M')
+        response = self._read_response(1)
         self._validate_command(response)
+
+
+    def cancel_current_operation(self):
+        self.cancel_goto()
+
+    def display(self):
+        print "not implemented"
+
+    def get_altaz(self):
+        _az, _el = self._get_position(AZEL)
+        _obstime = Time(self.get_time_initilizer())
+        _location = self.get_earth_location()
+        return SkyCoord(alt=_el*u.deg,
+                        az=_az*u.deg,
+                        frame='altaz',
+                        obstime = _obstime,
+                        location=_location)
+
+    def get_time(self):
+        print "not implemented"
+
+    def goto_altaz(self, altaz):
+        print "not implemented"
+
+    def is_aligned(self):
+        print "not implemented"
+
+    def set_earth_location(self):
+        print "not implemented"

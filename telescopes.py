@@ -145,3 +145,7 @@ class BaseTelescope(object):
 
     def _verify_connection(self):
         pass
+
+    def get_earth_location(self):
+         latitude, longitude = self.get_location()
+         return EarthLocation(lat = latitude*u.deg, lon = longitude *u.deg)
