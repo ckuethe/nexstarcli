@@ -1,39 +1,67 @@
 import telescopes
+import time
 
 
-class Telescope(telescopes.BaseTelescope):
-    def goto_altaz(self, altaz):
-        pass
+class FakeTelescope(telescopes.BaseTelescope):
+
+    _location_lat = 0.0
+    _location_long = 0.0
+    _time = None
+    _is_aligned = False
+    _response = "#"
+    _ra = 0.0
+    _dec = 0.0
+    _az = 0.0
+    _alt = 0.0
+    _operation_in_progress = False
+    _received_commands = []
+    _outputs = []
+    _internal_counter = None
+
+    def read_response(self):
+        return self._response
 
     def is_aligned(self):
-        pass
+        return self._is_aligned
 
-    def get_radec(self):
-        pass
+    def get_ra_dec(self):
+        return self._ra, self._dec
 
-    def get_altaz(self):
-        pass
+    def get_alt_az(self):
+        return self._alt, self.az
 
     def cancel_current_operation(self):
-        pass
+        self._operation_in_progress = False
+        return self._response
 
-    def get_location(self):
-        pass
+    def get_location_lat_long(self):
+        return self._location_lat, self._location_long
 
-    def set_earth_location(self, latlong):
-        pass
+    def set_location_lat_long(self, _lat, _long):
+        self._location_lat = _lat
+        self._location_long = _long
 
-    def goto_radec(self, radec):
-        pass
+    def goto_radec(self, _ra, _dec):
+        self._ra = _ra
+        self._dec = _dec
+        self._response = "#"
 
-    def get_time(self):
-        pass
+    def goto_altaz(self, _alt, _az):
+        self._alt = _alt
+        self._az = _az
+        self._response = "#"
+
+    def get_time_initializer(self):
+        return time.time()
 
     def display(self, msg):
-        pass
+        self._outputs.append(msg)
+        self._response = "#"
 
-    def set_time(self, time):
-        pass
+    def set_time_initializer(self, _time):
+        self._time = _time
+        self._internal_counter = time.time()
 
-    def _send_command(self, cmd):
-        pass
+    def send_command(self, cmd):
+            self._received_commands.append(cmd)
+

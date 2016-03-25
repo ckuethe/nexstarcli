@@ -101,8 +101,8 @@ def main():
             map(int, longitude.split(",")),
             map(int, latitude.split(","))
         )
-    elif args.set_time:
-        telescope.set_time(map(int, args.set_time.split(",")))
+    elif args.set_time_initializer:
+        telescope.set_time(map(int, args.set_time_initializer.split(",")))
     elif args.set_tracking_mode:
         telescope.set_tracking_mode(int(args.set_tracking_mode))
     elif args.goto_azel:

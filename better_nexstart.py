@@ -55,6 +55,8 @@ class NexStarSLT130(telescopes.BaseTelescope):
     def _get_position(self, coordinate_system):
         """Returns telescope postion in the requested coordinate system.
 
+        Possible coordinagte systems are radec(e) and azel(z)
+
         """
         self._send_command(coordinate_system)
         response = self._read_response(18)
@@ -234,12 +236,12 @@ class NexStarSLT130(telescopes.BaseTelescope):
         return date_string
 
 
-    def set_time(self, time):
+    def set_time_initializer(self, time):
         command = 'H'
         for p in time:
             command += chr(p)
-        self.serial.write(command)
-        response = self.serial.read(1)
+        self._send_command(command)
+        response = self._read_response(1)
         self._validate_command(response)
 
     def get_version(self):
@@ -277,27 +279,16 @@ class NexStarSLT130(telescopes.BaseTelescope):
     def cancel_current_operation(self):
         self.cancel_goto()
 
-    def display(self):
-        print "not implemented"
+    def display(self, msg):
+        print(self.echo(msg))
 
-    def get_altaz(self):
-        _az, _el = self._get_position(AZEL)
-        _obstime = Time(self.get_time_initilizer())
-        _location = self.get_earth_location()
-        return SkyCoord(alt=_el*u.deg,
-                        az=_az*u.deg,
-                        frame='altaz',
-                        obstime = _obstime,
-                        location=_location)
 
-    def get_time(self):
-        print "not implemented"
 
     def goto_altaz(self, altaz):
-        print "not implemented"
+        self.goto_azel(altaz.az.deg, altaz.el.deg)
 
     def is_aligned(self):
         print "not implemented"
 
-    def set_earth_location(self):
+    def set_location_lat_long(self):
         print "not implemented"
