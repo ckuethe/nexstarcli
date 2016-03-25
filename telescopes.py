@@ -28,12 +28,12 @@ class BaseTelescope(object):
         """
         self.device = device
 
-    @abstractmethod
+
     def cancel_current_operation(self):
         """Cancels any current operation the telescope is performing"""
         pass
 
-    @abstractmethod
+
     def get_location_lat_long(self):
         """Returns telescope location in latitude and longitude.
 
@@ -41,7 +41,7 @@ class BaseTelescope(object):
         """
         pass
 
-    @abstractmethod
+
     def set_location_lat_long(self, latlong):
         """Sets telescope locatoin (lat and long) to provided earth location
 
@@ -54,7 +54,7 @@ class BaseTelescope(object):
          latitude, longitude = self.get_location_lat_long()
          return EarthLocation(lat = latitude*u.deg, lon = longitude *u.deg)
 
-    @abstractmethod
+
     def get_ra_dec(self):
         """Returns Right Ascension and Declination telescope is pointing at
 
@@ -66,7 +66,7 @@ class BaseTelescope(object):
         _ra, _dec = self.get_ra_dec()
         return SkyCoord(ra=_ra*u.deg, dec=_dec*u.deg, frame="icrs")
 
-    @abstractmethod
+
     def goto_ra_dec(self, _ra, _dec):
         """Points telescope to provided radec.
 
@@ -78,7 +78,7 @@ class BaseTelescope(object):
     def goto_radec(self, _radec):
         self.goto_ra_dec(_radec.ra.degree, _radec.dec.degree)
 
-    @abstractmethod
+
     def get_alt_az(self):
         """Gets Altitude (elevation) and azimuth telescope is pointing to
         :return: object with alt az information.
@@ -93,7 +93,7 @@ class BaseTelescope(object):
                         obstime=self.get_time(),
                         location=self.get_earth_location())
 
-    @abstractmethod
+
     def goto_alt_az(self, _alt, _az):
         """Points telescope to provided Alt/Ax coodinates.
 
@@ -110,7 +110,7 @@ class BaseTelescope(object):
 
         :return: time initilizer object
         """
-        pass
+        return
 
     def get_time(self):
         _time_initializer = self.get_time_initializer()
@@ -125,7 +125,7 @@ class BaseTelescope(object):
     def set_time(self, _time):
         self.set_time_initializer(_time.unix)
 
-    @abstractmethod
+
     def display(self, msg):
         """Display message on telescope's control display
 
@@ -160,7 +160,7 @@ class BaseTelescope(object):
 
     def get_altaz(self):
         _alt, _az = self.get_alt_az()
-        _obstime = Time(self.get_time_initilizer())
+        _obstime = Time(self.get_time_initializer(), format='unix')
         _location = self.get_earth_location()
         return SkyCoord(alt=_alt*u.deg,
                         az=_az*u.deg,
@@ -233,7 +233,7 @@ class NexStarSLT130(BaseTelescope):
         return "#" in response
 
     def goto_alt_az(self, _alt, _az):
-        self._goto_command('b', (_az, _alt)
+        self._goto_command('b', (_az, _alt))
 
     def goto_ra_dec(self, _ra, _dec):
         self._goto_command('r', (_ra, _dec))
