@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-import better_nexstart
+import future
+import telescopes
 import argparse
 from astropy import units as u
 from astropy.time import Time
@@ -13,7 +14,6 @@ def _convert_azel_to_radec(_az, _el, _location, _time):
                      obstime=_time, location=_location)
     _radec = _azel.icrs
     return _radec.ra.degree, _radec.dec.degree
-
 
 def _convert_radec_to_azel(_ra, _dec, _location, _time):
     # collect latitude and logitude from the telescope
@@ -46,19 +46,21 @@ def main():
     group.add_argument("-d",
                        help="Port telescope is connected to."
                             "Default = /dev/ttyUSB0")
+    group.add_argument("--get_altaz", action="store_true")
     group.add_argument("--get_azel", action="store_true")
     group.add_argument("--get_location", action="store_true")
     group.add_argument("--get_model", action="store_true")
     group.add_argument("--get_radec", action="store_true")
+    group.add_argument("--debug_get_radec", action="store_true")
     group.add_argument("--get_time", action="store_true")
     group.add_argument("--get_tracking_mode", action="store_true")
     group.add_argument("--get_version", action="store_true")
     group.add_argument("--set_location", nargs=2,
                        metavar=("latitude", "longitude"))
-    group.add_argument("--goto_azel", nargs=2, metavar=("az", "el"))
+    group.add_argument("--goto_alt_az", nargs=2, metavar=("alt", "az"))
     group.add_argument("--goto_in_progress", action="store_true")
     group.add_argument("--goto_radec", nargs=2, metavar=("Ra", "Dec"))
-    group.add_argument("--radec_to_azel", nargs=2, metavar=("Ra", "Dec"))
+    group.add_argument("--radec_to_altaz", nargs=2, metavar=("Ra", "Dec"))
     group.add_argument("--set_tracking_mode", metavar="tracking_mode")
     group.add_argument("--set_time")
     group.add_argument("--cancel_goto", action="store_true")
@@ -77,20 +79,21 @@ def main():
     else:
         device = '/dev/ttyUSB0'
 
-    telescope = better_nexstart.NexStarSLT130(device)
+    telescope = telescopes.NexStarSLT130(device)
 
     if args.get_azel:
+        print(telescope.get_alt_az())
+    elif args.debug_get_radec:
+        print(telescope.get_ra_dec())
+    elif args.get_altaz:
         _altaz = telescope.get_altaz()
-        print(_altaz.az.deg, _altaz.alt.deg)
+        print(_altaz)
     elif args.get_location:
         _earth_location = telescope.get_earth_location()
         print(_earth_location.latitude.deg, _earth_location.longitude.deg)
     elif args.get_radec:
-        _az, _el = telescope.get_azel()
-        # print(telescope.get_radec())
-        obstime = Time.now()
-        telescope_location = _get_telescope_location(telescope)
-        print (_convert_azel_to_radec(_az, _el, telescope_location, obstime))
+        _altaz = telescope.get_altaz()
+        print _altaz.icrs
     elif args.get_tracking_mode:
         print(telescope.get_tracking_mode())
     elif args.get_version:
@@ -104,14 +107,15 @@ def main():
             map(int, longitude.split(",")),
             map(int, latitude.split(","))
         )
-    elif args.set_time_initializer:
-        telescope.set_time_initializer(map(int, args.set_time_initializer.split(",")))
+    elif args.set_time:
+        print "broken!!!!!"
+        #telescope.set_time_initializer(map(int, args.set_time_initializer.split(",")))
     elif args.set_tracking_mode:
         telescope.set_tracking_mode(int(args.set_tracking_mode))
-    elif args.goto_azel:
-        _az = float(args.goto_azel[0])
-        _el = float(args.goto_azel[1])
-        telescope.safe_goto_azel(_az, _el)
+    elif args.goto_alt_az:
+        _alt = float(args.goto_alt_az[0])
+        _az = float(args.goto_alt_az[1])
+        telescope.goto_alt_az(_alt, _az)
     elif args.goto_in_progress:
         if telescope.goto_in_progress():
             print("Yes")
@@ -154,12 +158,12 @@ def main():
         # check that number if safe
         # telescope.is_this_ra_safe(_ra)
 
-    elif args.radec_to_azel:
+    elif args.radec_to_altaz:
         # collect latitude and logitude from the telescope
         telescope_location = _get_telescope_location(telescope)
         # create icrs frame
-        _ra = float(args.radec_to_azel[0])
-        _dec = float(args.radec_to_azel[1])
+        _ra = float(args.radec_to_altaz[0])
+        _dec = float(args.radec_to_altaz[1])
         c = SkyCoord(ra=_ra * u.degree, dec=_dec * u.degree, frame='icrs')
 
         # Create observer time
@@ -171,7 +175,7 @@ def main():
         _el = c_altaz.alt.degree
         _az = c_altaz.az.degree
         print _az, _el
-        telescope.goto_azel(_az, _el)
+        telescope.goto_altaz(_az, _el)
 
     else:
         print(parser.print_help())

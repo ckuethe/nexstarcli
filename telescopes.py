@@ -51,8 +51,8 @@ class BaseTelescope(object):
         pass
 
     def get_earth_location(self):
-         latitude, longitude = self.get_location_lat_long()
-         return EarthLocation(lat = latitude*u.deg, lon = longitude *u.deg)
+        latitude, longitude = self.get_location_lat_long()
+        return EarthLocation(lat = latitude*u.deg, lon = longitude *u.deg)
 
 
     def get_ra_dec(self):
@@ -160,7 +160,7 @@ class BaseTelescope(object):
 
     def get_altaz(self):
         _alt, _az = self.get_alt_az()
-        _obstime = Time(self.get_time_initializer(), format='unix')
+        _obstime = Time(self.get_time_initializer(), format=self.time_format)
         _location = self.get_earth_location()
         return SkyCoord(alt=_alt*u.deg,
                         az=_az*u.deg,
@@ -173,6 +173,8 @@ class BaseTelescope(object):
         return Time(_time_initializer)
 
 class NexStarSLT130(BaseTelescope):
+
+    time_format = 'isot'
 
     def __init__(self, device):
         super(NexStarSLT130, self).__init__(device)
@@ -223,11 +225,9 @@ class NexStarSLT130(BaseTelescope):
     def get_ra_dec(self):
         return self._get_position('e')
 
-
     def _goto_command(self, char, values):
         command = (char + self._convert_to_percentage_of_revolution_in_hex(values[0]) + ',' +
                    self._convert_to_percentage_of_revolution_in_hex(values[1]))
-        print command
         self.send_command(command)
         response = self.read_response(1)
         return "#" in response
@@ -287,7 +287,7 @@ class NexStarSLT130(BaseTelescope):
 
 
 
-    def get_location(self):
+    def get_location_lat_long(self):
         """Get location in latitude and longitude
 
         Positive latitude is above the equator (N), and negative latitude is
@@ -336,7 +336,7 @@ class NexStarSLT130(BaseTelescope):
             time = time + (ord(char),)
         return time
 
-    def get_time_initilizer(self):
+    def get_time_initializer(self):
         """Returns time initializer  of the format YYYYMMDDTHHmmss"""
         (_hour, _minute, _seconds,
          _month, _day_of_month,  _year,

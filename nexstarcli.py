@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import nexstar
+import telescopes
 import argparse
 from astropy import units as u
 from astropy.time import Time
@@ -46,7 +46,7 @@ def main():
     group.add_argument("-d",
                        help="Port telescope is connected to."
                             "Default = /dev/ttyUSB0")
-    group.add_argument("--get_azel", action="store_true")
+    group.add_argument("--get_altaz", action="store_true")
     group.add_argument("--get_location", action="store_true")
     group.add_argument("--get_model", action="store_true")
     group.add_argument("--get_radec", action="store_true")
@@ -76,12 +76,12 @@ def main():
     else:
         device = '/dev/ttyUSB0'
 
-    telescope = nexstar.NexStar(device)
+    telescope = telescopes.NexStarSLT130(device)
 
-    if args.get_azel:
-        print(telescope.get_azel())
+    if args.get_altaz:
+        print(telescope.get_altaz())
     elif args.get_location:
-        print(telescope.get_location())
+        print(telescope.get_earth_location())
     elif args.get_radec:
         _az, _el = telescope.get_azel()
         # print(telescope.get_radec())
@@ -101,7 +101,7 @@ def main():
             map(int, longitude.split(",")),
             map(int, latitude.split(","))
         )
-    elif args.set_time_initializer:
+    elif args.set_time:
         telescope.set_time(map(int, args.set_time_initializer.split(",")))
     elif args.set_tracking_mode:
         telescope.set_tracking_mode(int(args.set_tracking_mode))
